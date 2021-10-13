@@ -8,6 +8,8 @@ interface ISystem {
     function __deactivate__():Void;
 
     function __update__(dt:Float):Void;
+    
+    function __draw__():Void;
 
 
     function isActive():Bool;

@@ -27,6 +27,7 @@ class SystemBuilder {
     static var AD_META = [ 'added', 'ad', 'a' ];
     static var RM_META = [ 'removed', 'rm', 'r' ];
     static var UPD_META = [ 'update', 'up', 'u' ];
+    static var DR_META = [ 'draw', 'dr', 'd' ];
 
     public static var systemIndex = -1;
     public static var systemIds = new Map<String, Int>();
@@ -60,6 +61,8 @@ class SystemBuilder {
                     switch (field.name) {
                         case '__update__':
                             Context.error('Do not override the `__update__` function! Use `@update` meta instead! More info at README example', field.pos);
+                        case '__draw__':
+                            Context.error('Do not override the `__draw__` function! Use `@draw` meta instead! More info at README example', field.pos);
                         case '__activate__':
                             Context.error('Do not override the `__activate__` function! `onactivate` can be overrided instead!', field.pos);
                         case '__deactivate__':
@@ -144,7 +147,7 @@ class SystemBuilder {
         // find and init meta defined views
         fields
             .filter(notSkipped)
-            .filter(containsMeta.bind(_, UPD_META.concat(AD_META).concat(RM_META)))
+            .filter(containsMeta.bind(_, UPD_META.concat(AD_META).concat(RM_META).concat(DR_META)))
             .iter(function(field) {
                 switch (field.kind) {
                     case FFun(func): {
@@ -217,6 +220,7 @@ class SystemBuilder {
         var ufuncs = fields.filter(notSkipped).filter(containsMeta.bind(_, UPD_META)).map(procMetaFunc).filter(notNull);
         var afuncs = fields.filter(notSkipped).filter(containsMeta.bind(_, AD_META)).map(procMetaFunc).filter(notNull);
         var rfuncs = fields.filter(notSkipped).filter(containsMeta.bind(_, RM_META)).map(procMetaFunc).filter(notNull);
+        var dfuncs = fields.filter(notSkipped).filter(containsMeta.bind(_, DR_META)).map(procMetaFunc).filter(notNull);
 
         var listeners = afuncs.concat(rfuncs);
 
@@ -258,6 +262,26 @@ class SystemBuilder {
                 ]
             )
             #end;
+
+            var dexprs = []
+            .concat(
+                dfuncs.map(function(f) {
+                    return switch (f.type) {
+                        case SINGLE_CALL: {
+                            macro $i{ f.name }($a{ f.args });
+                        }
+                        case VIEW_ITER: {
+                            var fwrapper = { expr: EFunction(null, { args: f.viewargs, ret: macro:Void, expr: macro $i{ f.name }($a{ f.args }) }), pos: Context.currentPos()};
+                            macro $i{ f.view.name }.iter($fwrapper);
+                        }
+                        case ENTITY_ITER: {
+                            macro for (__entity__ in echoes.Workflow.entities) {
+                                $i{ f.name }($a{ f.args });
+                            }
+                        }
+                    }
+                })
+            );
 
         var aexpr = macro if (!activated) $b{
             [].concat(
@@ -341,6 +365,12 @@ class SystemBuilder {
         if (uexprs.length > 0) {
 
             fields.push(ffun([APublic, AOverride], '__update__', [arg('__dt__', macro:Float)], null, macro $b{ uexprs }, Context.currentPos()));
+
+        }
+
+        if (dexprs.length > 0) {
+
+            fields.push(ffun([APublic, AOverride], '__draw__', [], null, macro $b{ dexprs }, Context.currentPos()));
 
         }
 

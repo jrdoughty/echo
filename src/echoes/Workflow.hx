@@ -95,6 +95,16 @@ class Workflow {
 
 
     /**
+     * Draw 
+     */
+    public static function draw() {
+        for (s in systems) {
+            s.__draw__();
+        }
+    }
+
+
+    /**
      * Removes all views, systems and entities from the workflow, and resets the id sequence 
      */
     public static function reset() {

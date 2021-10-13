@@ -52,6 +52,10 @@ class System implements echoes.core.ISystem {
         // macro
     }
 
+    @:noCompletion public function __draw__() {
+        // macro
+    }
+
     public function isActive():Bool {
         return activated;
     }
