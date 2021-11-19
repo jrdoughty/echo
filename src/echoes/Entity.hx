@@ -91,8 +91,22 @@ abstract Entity(Int) from Int to Int {
      * Returns list of all associated to this entity components.  
      * @return String
      */
-    public inline function print():String {
+     public inline function print():String {
         return Workflow.printAllComponentsOf(this);
+    }
+    /**
+     * Returns list of all associated to this entity components.  
+     * @return String
+     */
+    public inline function compTypes():String {
+        return Workflow.printAllComponentTypesOf(this);
+    }
+    /**
+     * Returns list of all entity's components.  
+     * @return Array<Any>
+     */
+    public inline function getComps():Array<Any> {
+        return Workflow.allComponentOf(this);
     }
 
 

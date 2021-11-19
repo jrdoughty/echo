@@ -47,12 +47,15 @@ class ComponentBuilder {
                     // instance
 
                     var storage = new echoes.core.Storage<$componentComplexType>();
-
                     function new() {
                         @:privateAccess echoes.Workflow.definedContainers.push(this);
                     }
 
                     public inline function get(id:Int):$componentComplexType {
+                        return storage.get(id);
+                    }
+
+                    public inline function getAsAny(id:Int):Any {
                         return storage.get(id);
                     }
 
@@ -62,6 +65,10 @@ class ComponentBuilder {
 
                     public inline function add(id:Int, c:$componentComplexType) {
                         storage.add(id, c);
+                    }
+
+                    public inline function addAsAny(id:Int, c:Any) {
+                        storage.add(id, cast c);
                     }
 
                     public inline function remove(id:Int) {
@@ -74,6 +81,10 @@ class ComponentBuilder {
 
                     public inline function print(id:Int):String {
                         return $v{componentTypeName} + '=' + Std.string(storage.get(id));
+                    }
+
+                    public inline function type(id:Int):String {
+                        return $v{componentTypeName};
                     }
 
                 }

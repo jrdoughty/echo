@@ -5,6 +5,9 @@ import echoes.core.AbstractView;
 import echoes.core.ICleanableComponentContainer;
 import echoes.core.ISystem;
 import echoes.core.RestrictedLinkedList;
+import haxe.Serializer;
+import haxe.Unserializer;
+//import serialization.WorkflowData;
 
 /**
  *  Workflow  
@@ -180,6 +183,21 @@ class Workflow {
         return id;
     }
 
+    /**
+     * Returns `Entity` if the id is added to the workflow, otherwise returns `false` if its in the cache or active entities 
+     * @param id `Int` entityID
+     * @param immediate `Bool` should it be made active immediately
+     * @return `Bool`
+     */
+    public static function inject(id:Int):Entity {
+        if (nextId <= id) { //ensures you don't get a conflict as you count up
+            nextId = id + 1;
+        }
+        statuses[id] = Active;
+        entities.add(id);
+        return cast(id, Entity);
+    }
+
     @:allow(echoes.Entity) static function cache(id:Int) {
         // Active or Inactive
         if (status(id) < Cached) {
@@ -231,5 +249,68 @@ class Workflow {
         return ret.substr(0, ret.length - 1);
     }
 
+    @:allow(echoes.Entity) static inline function printAllComponentTypesOf(id:Int):String {
+        var ret = '#$id:';
+        for (c in definedContainers) {
+            if (c.exists(id)) {
+                ret += '${ c.getAsAny(id) },';
+            }
+        }
+        return ret.substr(0, ret.length - 1);
+    }
 
+    @:allow(echoes.Entity) static inline function allComponentOf(id:Int):Array<Any> {
+        var ret = [];
+        for (c in definedContainers) {
+            if (c.exists(id)) {
+                ret.push(c.getAsAny(id));
+            }
+        }
+        return ret;
+    }
+    public static function save():String
+    {
+        var map = new Map<Int, Map<String,Any>>();
+        for(i in Workflow.entities)
+        {
+            map.set(i,new Map<String,Any>());
+            var types = i.compTypes();
+            for(j in i.getComps())
+            { 
+                map.get(i).set(Type.getClassName(Type.getClass(j)),j);
+            }
+
+        }
+        
+        //trace(map);
+        var seri = new haxe.Serializer();
+        seri.serialize(map);
+        return(seri.toString());   
+    }
+    public static function load(startString:String)
+    {   
+        var u = new haxe.Unserializer(startString);
+        var eMap:Map<Int, Map<String,Any>> = cast u.unserialize();
+        //trace(eMap);
+
+        for(i in eMap.keys())
+        {
+            var e = Workflow.inject(i);
+            trace(e);
+            for(j in eMap[i].keys())
+            {
+                for(cont in definedContainers)
+                {
+                    if(j == cont.type(i))
+                    {
+                        cont.addAsAny(i,eMap[i][j]);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        //var d = new WorkflowData();
+        
+    }
 }
