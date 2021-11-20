@@ -287,9 +287,9 @@ class Workflow {
         seri.serialize(map);
         return(seri.toString());   
     }
-    public static function load(startString:String)
+    public static function load(dataString:String)
     {   
-        var u = new haxe.Unserializer(startString);
+        var u = new haxe.Unserializer(dataString);
         var eMap:Map<Int, Map<String,Any>> = cast u.unserialize();
         //trace(eMap);
 
