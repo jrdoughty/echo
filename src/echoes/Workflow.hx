@@ -292,8 +292,18 @@ class Workflow {
         var u = new haxe.Unserializer(dataString);
         var eMap:Map<Int, Map<String,Any>> = cast u.unserialize();
         //trace(eMap);
+        var keys = [];
+        
+        for (i in eMap.keys())
+        {
+            keys.push(i);   
+        }
 
-        for(i in eMap.keys())
+        #if !js
+        keys.reverse();
+        #end
+
+        for(i in keys)
         {
             var e = Workflow.inject(i);
             trace(e);
